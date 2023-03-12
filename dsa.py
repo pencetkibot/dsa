@@ -38,6 +38,8 @@ def get_ds(query):
     return data
 
 def writeToFile(data, filename):
+    if not os.path.exists('photo'):
+        os.makedirs('photo')
     with open(filename,'wb') as file:
         del_older_files('photo')
         file.write(data)
