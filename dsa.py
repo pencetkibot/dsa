@@ -13,10 +13,10 @@ c = conn.cursor()
 def create_table():
     sql_create_table = """
     CREATE TABLE IF NOT EXISTS dsa(id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    ds_number TEXT NOT NULL UNIQUE,
+    ds_number INTEGER NOT NULL UNIQUE,
     customer TEXT NOT NULL,
-    equipment TEXT NULL,
-    serial_number NOT NULL, 
+    equipment INTEGER NULL,
+    serial_number INTEGER NOT NULL, 
     process_date TEXT NOT NULL,
     delivery_date TEXT NOT NULL,
     description TEXT,
@@ -94,7 +94,7 @@ def main():
                 st.text("Process Date : {}".format(i[5]))
                 st.text("Delivery Date : {}".format(i[6]))
                 st.text("Description : {}".format(i[7]))
-                pfname = i[1] + ".jpg"
+                pfname = ("{}.jpg".format(i[1]))
                 photo_path = os.path.join('photo', pfname)
                 writeToFile(i[8], photo_path)
                 image = Image.open(photo_path)
