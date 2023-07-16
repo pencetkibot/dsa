@@ -19,17 +19,18 @@ def create_table():
     serial_number INTEGER NOT NULL, 
     process_date TEXT NOT NULL,
     delivery_date TEXT NOT NULL,
+    upload_date TEXT NOT NULL,
     description TEXT,
     photo BLOB NOT NULL)
     """
     c.execute(sql_create_table)
 
-def add_data(ds_number,customer, equipment, serial_number, process_date, delivery_date, description, photo):
+def add_data(ds_number,customer, equipment, serial_number, process_date, delivery_date, upload_date, description, photo):
     sql_insert = """
-    INSERT INTO dsa(id, ds_number, customer, equipment, serial_number, process_date, delivery_date, description, photo)
-     VALUES (null, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO dsa(id, ds_number, customer, equipment, serial_number, process_date, delivery_date, upload_date, description, photo)
+     VALUES (null, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
-    c.execute(sql_insert, (ds_number, customer, equipment, serial_number, process_date, delivery_date, description, photo))
+    c.execute(sql_insert, (ds_number, customer, equipment, serial_number, process_date, delivery_date, upload_date, description, photo))
     conn.commit()
 
 def get_ds(query):
@@ -93,10 +94,11 @@ def main():
                 st.text("Serial Number : {}".format(i[4]))
                 st.text("Process Date : {}".format(i[5]))
                 st.text("Delivery Date : {}".format(i[6]))
-                st.text("Description : {}".format(i[7]))
+                st.text("Upload Time : {}".format(i[7]))
+                st.text("Description : {}".format(i[8]))
                 pfname = ("{}.jpg".format(i[1]))
                 photo_path = os.path.join('photo', pfname)
-                writeToFile(i[8], photo_path)
+                writeToFile(i[9], photo_path)
                 image = Image.open(photo_path)
                 st.image(image)
 
@@ -109,14 +111,15 @@ def main():
         serial_number = st.text_input('Serial Number')
         process_date = st.date_input('Process Date')
         delivery_date = st.date_input('Delivery Date')
+        upload_date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         description = st.text_area('Description')
-        photo = st.file_uploader(label="Select DS photo", type=['jpg'])        
+        photo = st.file_uploader(label="Select DS photo", type=['jpg'])
         if st.button("Add"):
             with BytesIO() as output:
                 with Image.open(photo) as img:
                     img.save(output, 'JPEG', optimize=True, quality=10)
                 bytes_data = output.getvalue()
-            add_data(ds_number, customer, equipment, serial_number, process_date, delivery_date,description, bytes_data)
+            add_data(ds_number, customer, equipment, serial_number, process_date, delivery_date, upload_date, description, bytes_data)
             st.success("Deliver Slip :'{}' saved".format(ds_number))
 
 if __name__ == '__main__':
