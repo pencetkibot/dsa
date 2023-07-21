@@ -111,7 +111,7 @@ def main():
         serial_number = st.text_input('Serial Number')
         process_date = st.date_input('Process Date')
         delivery_date = st.date_input('Delivery Date')
-        upload_date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        upload_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         description = st.text_area('Description')
         photo = st.file_uploader(label="Select DS photo", type=['jpg'])
         if st.button("Add"):
