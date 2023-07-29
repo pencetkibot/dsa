@@ -5,6 +5,7 @@ import os
 import sys
 import datetime
 import streamlit as st
+import pandas as pd
 from PIL import Image
 
 conn = sqlite3.connect('dsa.db')
@@ -45,6 +46,9 @@ def writeToFile(data, filename):
         del_older_files('photo')
         file.write(data)
 
+def convert_df(df):
+    return df.to_csv().encode('utf-8')
+
 def del_older_files(req_path):
     N=7
     if not os.path.exists(req_path):
@@ -62,13 +66,20 @@ def del_older_files(req_path):
 
 def main():
     html_temp = """
-    <div style="background-color:{}; padding: 5px; border-radius:5px">
-    <h1 style="color: {}; text-align: center;">Delivery Slip Archiver</h1>
+    <div style="background-color:{}; padding: 9px; border-radius:0px">
+    <h1 style="color: {}; text-align: center;">PT ASTRAGRAPHIA</h1>
+    </div>
+    """
+    st.markdown(html_temp.format('royalblue', 'white'), unsafe_allow_html=True)
+    html_temp = """
+    <div style="background-color:{}; padding: 0px; border-radius:0px">
+    <h3 style="color: {}; text-align: center;">DELIVERY SLIP ARCHIVE</h3>
     </div>
     """
     st.markdown(html_temp.format('royalblue', 'white'), unsafe_allow_html=True)
 
-    menu = ["Upload DS", "Search DS"]
+
+    menu = ["Upload DS", "Search DS", "Rekap DS"]
     choice = st.sidebar.selectbox("Menu", menu)
 
     if choice == "Search DS":
@@ -121,6 +132,23 @@ def main():
                 bytes_data = output.getvalue()
             add_data(ds_number, customer, equipment, serial_number, process_date, delivery_date, upload_date, description, bytes_data)
             st.success("Deliver Slip :'{}' saved".format(ds_number))
+
+    elif choice == "Rekap DS":
+        st.subheader("Rekap DS")
+        start_date = st.date_input("Start Date")
+        end_date = st.date_input("End Date")
+        if st.button("Display DS"):
+            query = 'SELECT ds_number AS "DS NUMBER", upload_date AS "UPLOAD DATE", customer AS "CUSTOMER NAME", serial_number AS "SERIAL NUMBER", equipment AS "EQUIPMENT", description AS "DESCRIPTION" FROM dsa WHERE upload_date BETWEEN "{}" AND "{}"'.format(start_date, end_date)
+            sql_query = pd.read_sql_query(query, conn)
+            df = pd.DataFrame(sql_query, columns=['DS NUMBER', 'CUSTOMER NAME', 'EQUIPMENT', 'SERIAL NUMBER', 'UPLOAD DATE', 'DESCRIPTION'])
+            st.table(df)
+            csv = convert_df(df)
+            st.download_button(
+                label="Download Recap",
+                data=csv,
+                file_name='recap.csv',
+                mime='text/csv'
+            )
 
 if __name__ == '__main__':
     main()
