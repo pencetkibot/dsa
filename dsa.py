@@ -1,6 +1,7 @@
 from io import BytesIO
 from pickletools import optimize
 import sqlite3
+import pdfkit as pdf
 import os
 import sys
 import datetime
@@ -47,7 +48,54 @@ def writeToFile(data, filename):
         file.write(data)
 
 def convert_df(df):
-    return df.to_csv().encode('utf-8')
+    headerreport="""
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .dataframe {
+            margin-left: auto;
+            margin-right: auto;            
+        }
+
+        h1, h2 { text-align: center;}
+
+        table { 
+            border-collapse: collapse;            
+        }
+
+        tr:nth-child(even){background-color: azure;}     
+        
+        th, td { padding: 5px;}
+        
+        th:nth-child(1) {display: none;}
+    </style>
+    <title>DSA-Report</title>
+</head>
+<body>
+    <h1>PT Astra Graphia</h1>
+    <h2>Rekap Delivery Archive</h2>
+"""
+
+    footerReport="""
+</body>
+</html>
+"""
+    df.to_html('data.html')
+
+    fo=open('data.html', 'r')
+    data = fo.read()
+    fo.close()
+    
+    fw=open('container.html', 'w')
+    fw.write(headerreport)
+    fw.write(data)
+    fw.write(footerReport)
+    fw.close()
+
+    pdf.from_file('container.html', 'report.pdf')
 
 def del_older_files(req_path):
     N=7
@@ -137,18 +185,19 @@ def main():
         st.subheader("Rekap DS")
         start_date = st.date_input("Start Date")
         end_date = st.date_input("End Date")
-        if st.button("Display DS"):
-            query = 'SELECT ds_number AS "DS NUMBER", upload_date AS "UPLOAD DATE", customer AS "CUSTOMER NAME", serial_number AS "SERIAL NUMBER", equipment AS "EQUIPMENT", description AS "DESCRIPTION" FROM dsa WHERE upload_date BETWEEN "{}" AND "{}"'.format(start_date, end_date)
+        if st.button("Display DS"):            
+            query = 'SELECT ds_number AS "DS NUMBER", upload_date AS "UPLOAD DATE", customer AS "CUSTOMER NAME", serial_number AS "SERIAL NUMBER", equipment AS "EQUIPMENT" FROM dsa WHERE upload_date BETWEEN "{}" AND "{}" ORDER BY upload_date DESC'.format(start_date, end_date)
             sql_query = pd.read_sql_query(query, conn)
-            df = pd.DataFrame(sql_query, columns=['DS NUMBER', 'CUSTOMER NAME', 'EQUIPMENT', 'SERIAL NUMBER', 'UPLOAD DATE', 'DESCRIPTION'])
+            df = pd.DataFrame(sql_query, columns=['DS NUMBER', 'CUSTOMER NAME', 'EQUIPMENT', 'SERIAL NUMBER', 'UPLOAD DATE'])
             st.table(df)
-            csv = convert_df(df)
-            st.download_button(
-                label="Download Recap",
-                data=csv,
-                file_name='recap.csv',
-                mime='text/csv'
-            )
+            reportdata = convert_df(df)
+            with open('report.pdf', 'rb') as file:
+                btn = st.download_button(
+                    label="Download Recap",
+                    data=file,
+                    file_name='recap.pdf',
+                    mime='application/octet-stream'
+                )
 
 if __name__ == '__main__':
     main()
